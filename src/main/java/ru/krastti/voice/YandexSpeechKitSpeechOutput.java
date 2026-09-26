@@ -18,12 +18,10 @@ import java.util.concurrent.RejectedExecutionException;
 public class YandexSpeechKitSpeechOutput implements SpeechOutput {
 
     private static final Logger log = LoggerFactory.getLogger(YandexSpeechKitSpeechOutput.class);
-    // TODO Вынести API_URL в applicationContext
-    private static final String API_URL = "https://tts.api.cloud.yandex.net/speech/v1/tts:synthesize";
-
     private final RestClient restClient;
     private final TaskExecutor speechExecutor;
     private final AudioPlayer audioPlayer;
+    private final String apiUrl;
     private final String apiKey;
     private final String voice;
     private final String speed;
@@ -31,6 +29,7 @@ public class YandexSpeechKitSpeechOutput implements SpeechOutput {
     public YandexSpeechKitSpeechOutput(RestClient.Builder restClientBuilder,
                                        TaskExecutor speechExecutor,
                                        AudioPlayer audioPlayer,
+                                       @Value("${yandex.speechkit.api-url}") String apiUrl,
                                        @Value("${YANDEX_SPEECHKIT_API_KEY:}") String apiKey,
                                        @Value("${YANDEX_SPEECHKIT_VOICE:filipp}") String voice,
                                        @Value("${YANDEX_SPEECHKIT_SPEED:0.95}") String speed) {
@@ -40,6 +39,7 @@ public class YandexSpeechKitSpeechOutput implements SpeechOutput {
         this.restClient = restClientBuilder.requestFactory(requestFactory).build();
         this.speechExecutor = speechExecutor;
         this.audioPlayer = audioPlayer;
+        this.apiUrl = apiUrl;
         this.apiKey = apiKey;
         this.voice = voice;
         this.speed = speed;
@@ -73,7 +73,7 @@ public class YandexSpeechKitSpeechOutput implements SpeechOutput {
             request.add("sampleRateHertz", "16000");
 
             byte[] pcmAudio = restClient.post()
-                    .uri(API_URL)
+                    .uri(apiUrl)
                     .header("Authorization", "Api-Key " + apiKey)
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .body(request)
